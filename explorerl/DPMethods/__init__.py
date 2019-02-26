@@ -1,2 +1,2 @@
 from .PolicyIteration import PolicyIteration
-from .Agent import Agent
+from .ValueIteration import ValueIteration

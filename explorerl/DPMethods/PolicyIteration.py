@@ -1,20 +1,26 @@
 import numpy as np
-from .Agent import Agent
+import sys
+sys.path.append("..")
+from agents import Agent
+
 class PolicyIteration(Agent):
     """
         Policy Iteration: 
             Reference: http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/DP.pdf
             Parameters:
-                value_map : state values for each state
-                policy_map : greedy action choice for each state
+                values : state values for each state
+                policy : greedy action choice for each state
                 env : gym environment
+                gamma : long term reward weighting
+                eps : termination condition
     """
-    def __init__(self,env):
+    def __init__(self,env,gamma=1,eps=1e-10,max_iterations=100):
         super().__init__(env)
         self.values = np.zeros(env.nS)
         self.policy = np.array([np.random.choice(env.nA) for i in range(env.nS)])
         self.eps = 1e-10
         self.gamma = 1
+        self.max_iterations = max_iterations
         self.policy_iteration()
         
     def act(self,observation):
@@ -41,10 +47,11 @@ class PolicyIteration(Agent):
                     q_vals[a] += p*(r + self.gamma*self.values[next_s])
             self.policy[s] = np.argmax(q_vals)
     
-    def policy_iteration(self,max_iterations=100):
-        for i in range(max_iterations):
+    def policy_iteration(self):
+        for i in range(self.max_iterations):
             old_values = self.values.copy()
             self.evaluate_policy()
             self.improve_policy()
             if np.sum(np.abs(old_values - self.values)) <= self.eps:
                 break
+                
