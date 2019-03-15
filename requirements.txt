@@ -1,0 +1,9 @@
+numpy
+pandas
+gym
+scikit-learn
+matplotlib
+JSAnimation
+ipython
+tensorflow==2.0.0-alpha0
+torch

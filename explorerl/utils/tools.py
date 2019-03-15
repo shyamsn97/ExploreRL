@@ -8,7 +8,14 @@ from matplotlib import animation
 from IPython.display import display
 
 
-
+def auto_import():
+    import numpy as np
+    import torch
+    import tensorflow as tf
+    import gym
+    import sys
+    from tqdm import tqdm
+    
 ##### Animation #####
 def display_frames_as_gif(frames):
     """

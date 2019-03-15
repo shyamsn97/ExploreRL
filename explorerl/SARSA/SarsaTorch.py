@@ -124,7 +124,7 @@ class SarsaTorch():
                 target = reward + self.gamma*(val)
                 loss_func = self.model["loss"][action]
                 optimizer = self.model["optimizer"][action]
-                loss = loss_func(torch.tensor(target),qvals[action])
+                loss = loss_func(qvals[action],torch.tensor(target,requires_grad=False))
                 optimizer.zero_grad()  
                 loss.backward()
                 optimizer.step()
