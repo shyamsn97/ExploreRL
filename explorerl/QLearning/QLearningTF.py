@@ -13,8 +13,9 @@ class QLearningTF(BaseAgent):
                  learning_rate=0.01, featurizer=None,scaler=None,use_bias = False):
         super(QLearningTF, self).__init__(observation_space,action_space,epsilon, decay, gamma, 
                  learning_rate, featurizer,scaler,use_bias)
+        tf.keras.backend.clear_session()
         self.create_model()
-    
+        
     def create_model(self):
         input_space = self.observation_space  
         if self.featurizer:
@@ -41,7 +42,6 @@ class QLearningTF(BaseAgent):
             gradients = tape.gradient(total_loss,model.trainable_variables)
             optimizer.apply_gradients(zip(gradients,model.trainable_variables))
                 
-            
         self.model["loss"] = mse_loss
         self.model["training_op"] = train_step
         print("Model Created!")
@@ -54,7 +54,7 @@ class QLearningTF(BaseAgent):
             qvals = []
             for action in range(self.action_space):
                 estimator = self.model["outputs"][action]
-                qval = estimator(np.expand_dims(self.featurize_state(obs),0))
+                qval = estimator(self.featurize_state(obs))
                 qvals.append(qval)
             if np.random.random() < self.epsilon:
                 return np.random.choice(self.action_space) , qvals
@@ -67,7 +67,7 @@ class QLearningTF(BaseAgent):
             qvals = []
             for action in range(self.action_space):
                 estimator = self.model["outputs"][action]
-                qval = estimator(np.expand_dims(self.featurize_state(obs),0))
+                qval = estimator(self.featurize_state(obs))
                 qvals.append(qval)
             return np.argmax(qvals) , qvals
         return act
@@ -91,7 +91,7 @@ class QLearningTF(BaseAgent):
                 rewards += reward
                 next_action , next_qs = policy(next_obs)
                 target = reward + self.gamma*np.max(next_qs)
-                inp = np.expand_dims(self.featurize_state(observation),0)
+                inp = self.featurize_state(observation)
                 training_op(self.model["outputs"][action],inp,target)
                 end = t
                 if done:

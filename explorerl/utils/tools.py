@@ -15,7 +15,7 @@ def auto_import():
     import gym
     import sys
     from tqdm import tqdm
-    
+
 ##### Animation #####
 def display_frames_as_gif(frames):
     """
@@ -43,3 +43,4 @@ def play_render(env,agent,steps=1000):
             break
     env.close()
     display_frames_as_gif(frames)
+    

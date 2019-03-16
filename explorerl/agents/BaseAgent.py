@@ -25,12 +25,12 @@ class BaseAgent():
                 state = self.scaler.transform([state])
             featurized = self.featurizer.transform(state)
             if self.use_bias:
-                return np.concatenate(([1],featurized[0]))
-            return featurized[0]
+                return np.expand_dims(np.concatenate(([1],featurized[0])),0)
+            return featurized
         if self.use_bias:
             return np.concatenate(([1],state))
-        return state  
-    
+        return np.expand_dims(state,0) 
+
     def create_model(self):
         pass
     
