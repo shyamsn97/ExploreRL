@@ -31,16 +31,22 @@ def display_frames_as_gif(frames):
     anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
     display(display_animation(anim, default_mode='loop'))
 
-def play_render(env,agent,steps=1000):
-    observation = env.reset()
+def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
     frames = []
     policy = agent.greedy()
-    for t in range(steps):
-        frames.append(env.render(mode = 'rgb_array'))
-        action, _ = policy(observation)
-        observation, reward, done, info = env.step(action)
-        if done:
-            break
-    env.close()
-    display_frames_as_gif(frames)
+    for ep in range(episodes):
+        observation = env.reset()
+        for t in range(steps):
+            if display:
+                env.render()
+            if gif:
+                frames.append(env.render(mode = 'rgb_array'))
+            values = policy(observation)
+            action = values[0]
+            observation, reward, done, info = env.step(action)
+            if done:
+                break
+        env.close()
+    if gif:
+        display_frames_as_gif(frames)
     

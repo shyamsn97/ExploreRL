@@ -9,17 +9,24 @@ from explorerl.agents import BaseAgent
 from explorerl.utils.models import LinearEstimatorTF
 
 class QLearningTF(BaseAgent):
-    def __init__(self, observation_space,action_space,epsilon=1.0, decay= 0.98, gamma=1.0, 
+    def __init__(self,epsilon=1.0, decay= 0.98, gamma=1.0, 
                  learning_rate=0.01, featurizer=None,scaler=None,use_bias = False):
-        super(QLearningTF, self).__init__(observation_space,action_space,epsilon, decay, gamma, 
+        super(QLearningTF, self).__init__(gamma, 
                  learning_rate, featurizer,scaler,use_bias)
         tf.keras.backend.clear_session()
-        self.create_model()
+        self.name = "QLearningTF"
+        self.epsilon = epsilon
+        self.decay = decay
+        self.original_configs = {"epsilon":self.epsilon,"decay":self.decay}
         
-    def create_model(self):
+    def initialize_model(self,observation_space,action_space):
+        self.epsilon = self.original_configs["epsilon"]
+        self.decay = self.original_configs["decay"]
+        self.observation_space = observation_space[0]
+        self.action_space = action_space
         input_space = self.observation_space  
         if self.featurizer:
-            input_space = self.featurizer.transform([np.arange(self.observation_space)]).flatten().shape[0]
+            input_space = self.featurizer.transform([np.ones(self.observation_space)]).flatten().shape[0]
         if self.use_bias:
             input_space += 1
         
@@ -46,8 +53,14 @@ class QLearningTF(BaseAgent):
         self.model["training_op"] = train_step
         print("Model Created!")
     
-    def default_policy(self):
+    def update_hyper_params(self,episode):
+        self.epsilon *= (self.decay**episode)
+        
+    def train_policy(self):
         return self.epsilon_greedy()
+    
+    def test_policy(self):
+        return self.greedy()
     
     def epsilon_greedy(self):
         def act(obs):
@@ -61,7 +74,6 @@ class QLearningTF(BaseAgent):
             return np.argmax(qvals) , qvals
         return act
                 
-    
     def greedy(self):
         def act(obs):
             qvals = []
@@ -72,6 +84,13 @@ class QLearningTF(BaseAgent):
             return np.argmax(qvals) , qvals
         return act
     
+    def train_iter(self,policy,action,values,obs,next_obs,reward,done):
+        training_op = self.model["training_op"]
+        next_action , next_qs = policy(next_obs)
+        target = reward + self.gamma*np.max(next_qs)
+        inp = self.featurize_state(obs)
+        training_op(self.model["outputs"][action],inp,target)
+        
     def train(self,env,episodes=200,early_stop=False,stop_criteria=20):
         prev_avg = -float('inf')
         orig_epsilon = self.epsilon
