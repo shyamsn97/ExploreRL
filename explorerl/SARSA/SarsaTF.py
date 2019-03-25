@@ -67,7 +67,7 @@ class SarsaTF(BaseAgent):
             qvals = []
             for action in range(self.action_space):
                 estimator = self.model["outputs"][action]
-                qval = estimator(self.featurize_state(obs))
+                qval = estimator(obs)
                 qvals.append(qval)
             if np.random.random() < self.epsilon:
                 return np.random.choice(self.action_space) , qvals
@@ -79,7 +79,7 @@ class SarsaTF(BaseAgent):
             qvals = []
             for action in range(self.action_space):
                 estimator = self.model["outputs"][action]
-                qval = estimator(self.featurize_state(obs))
+                qval = estimator(obs)
                 qvals.append(qval)
             return np.argmax(qvals) , qvals
         return act

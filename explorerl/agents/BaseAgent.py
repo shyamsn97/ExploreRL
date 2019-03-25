@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 class BaseAgent():
     def __init__(self,gamma, 
-                 learning_rate,featurizer,scaler,use_bias):
+                 learning_rate,featurizer,scaler,use_bias,has_replay=False):
         self.name = "Base"
         self.gamma = gamma
         self.learning_rate = learning_rate
@@ -11,6 +11,7 @@ class BaseAgent():
         self.scaler = scaler
         self.model = {}
         self.use_bias = use_bias
+        self.has_replay = has_replay
         self.stats = {"rewards":[],"episodes":[],"num_steps":[]}
  
     def featurize_state(self, state):
@@ -20,7 +21,9 @@ class BaseAgent():
         if self.featurizer:
             if self.scaler:
                 state = self.scaler.transform([state])
-            featurized = self.featurizer.transform(state)
+                featurized = self.featurizer.transform(state)
+            else:
+                featurized = self.featurizer.transform([state])
             if self.use_bias:
                 return np.expand_dims(np.concatenate(([1],featurized[0])),0)
             return featurized
@@ -40,8 +43,9 @@ class BaseAgent():
         if configs["avg_window"] > 0:
             avg_window = configs["avg_window"]
             avg = np.mean(self.stats["rewards"][::-1][:avg_window])
-            return "Epsilon : {}, avg reward with window size {} : {}".format(self.epsilon,avg_window,avg) , avg
-        return "Epsilon and reward {} : {}".format(self.epsilon,self.stats["rewards"][-1]), self.stats["rewards"][-1]
+            num_steps = self.stats["num_steps"][-1]
+            return "Epsilon : {}, Num Steps : {}, Avg Reward with Window Size {} : {}".format(self.epsilon,num_steps,avg_window,avg) , avg
+        return "Epsilon : {}, Num Steps : {}, reward : {}".format(self.epsilon,num_steps,self.stats["rewards"][-1]), self.stats["rewards"][-1]
     
     def update_hyper_params(self,episode):
         pass
@@ -53,6 +57,9 @@ class BaseAgent():
         pass
 
     def test_policy(self):
+        pass
+
+    def episodal_train_iter(self,policy):
         pass
 
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):

@@ -36,7 +36,9 @@ def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
     policy = agent.greedy()
     for ep in range(episodes):
         observation = env.reset()
+        total_reward = 0
         for t in range(steps):
+            observation = agent.featurize_state(observation)
             if display:
                 env.render()
             if gif:
@@ -44,8 +46,10 @@ def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
             values = policy(observation)
             action = values[0]
             observation, reward, done, info = env.step(action)
+            total_reward += reward
             if done:
                 break
+        print("Total reward for episode {}: {}".format(ep,total_reward))
         env.close()
     if gif:
         display_frames_as_gif(frames)

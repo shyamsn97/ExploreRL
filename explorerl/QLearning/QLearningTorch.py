@@ -51,7 +51,7 @@ class QLearningTorch(BaseAgent):
     
     def epsilon_greedy(self):
         def act(obs):
-            obs = torch.tensor(self.featurize_state(obs)).float()
+            obs = torch.tensor(obs).float()
             qvals = []
             for i in range(self.action_space):
                 qvals.append(self.model["output"][i](obs))
@@ -64,7 +64,7 @@ class QLearningTorch(BaseAgent):
                   
     def greedy(self):
         def act(obs):
-            obs = torch.tensor(self.featurize_state(obs)).float()
+            obs = torch.tensor(obs).float()
             qvals = []
             for i in range(self.action_space):
                 qvals.append(self.model["output"][i](obs))
