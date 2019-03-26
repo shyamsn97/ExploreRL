@@ -1,4 +1,4 @@
-# <ins>ExploreRL<ins>
+# ExploreRL
 Reinforcement Learning Algorithms implemented in Tensorflow 2.0 and PyTorch. Each algorithm is tested on openai gym environments. These tests can be found within each notebooks folder in their respective folders
 
 
