@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import tensorflow as tf
+import torch.nn.functional as F
 
 #Tensorflow
 class LinearEstimatorTF(tf.keras.Model):
@@ -11,9 +12,9 @@ class LinearEstimatorTF(tf.keras.Model):
         x = self.dense(x)
         return x
 
-class FeedForwardNN(tf.keras.Model):
+class FeedForwardNNTF(tf.keras.Model):
     def __init__(self,input_space,output_space,batch_norm=False):
-        super(FeedForwardNN, self).__init__()
+        super(FeedForwardNNTF, self).__init__()
         self.dense1 = tf.keras.layers.Dense(units=24,input_shape=(input_space,))
         self.dense2 = tf.keras.layers.Dense(units=24)
         self.dense3 = tf.keras.layers.Dense(units=output_space)
@@ -33,3 +34,17 @@ class LinearEstimatorTorch(torch.nn.Module):
     def forward(self,x):
         x = self.linear(x)
         return x
+
+class FeedForwardNNTorch(torch.nn.Module):
+    def __init__(self,input_size,output_size):
+        super(FeedForwardNNTorch, self).__init__()
+        self.linear1 = torch.nn.Linear(input_size,24)
+        self.linear2 = torch.nn.Linear(24,24)
+        self.linear3 = torch.nn.Linear(24,output_size)
+        
+    def forward(self,x):
+        x = F.relu(self.linear1(x))
+        x = F.relu(self.linear2(x))
+        x = self.linear3(x)
+        return x
+

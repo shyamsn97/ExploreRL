@@ -15,7 +15,7 @@ class SarsaTorch(BaseAgent):
                  learning_rate, featurizer,scaler,use_bias)
         self.name = "SarsaTorch"
         self.epsilon = epsilon
-        self.decay = decay       
+        self.decay = decay        
         self.original_configs = {"epsilon":self.epsilon,"decay":self.decay}
         
     def initialize_model(self,observation_space,action_space):
@@ -29,15 +29,10 @@ class SarsaTorch(BaseAgent):
         if self.use_bias:
             input_space += 1
 
-        self.model["output"] = []
-        self.model["loss"] = []
-        self.model["optimizer"] = []
-
-        for action in range(self.action_space):
-            model = LinearEstimatorTorch(input_space,1)
-            self.model["output"].append(model) 
-            self.model["loss"].append(torch.nn.MSELoss())
-            self.model["optimizer"].append(torch.optim.Adam(params=model.parameters(),lr=self.learning_rate,weight_decay=0.0001))
+        model = LinearEstimatorTorch(input_space,action_space)
+        self.model["outputs"] = model
+        self.model["loss"] = torch.nn.MSELoss()
+        self.model["optimizer"] = torch.optim.Adam(params=self.model["outputs"].parameters(),lr=self.learning_rate,weight_decay=0.0001)
         print("Model Created!")
     
     def update_hyper_params(self,episode):
@@ -52,38 +47,36 @@ class SarsaTorch(BaseAgent):
     def epsilon_greedy(self):
         def act(obs):
             obs = torch.tensor(obs).float()
-            qvals = []
-            for i in range(self.action_space):
-                qvals.append(self.model["output"][i](obs))
+            qvals = self.model["outputs"](obs)
             if np.random.random() < self.epsilon:
                 return np.random.choice(self.action_space) , qvals
             with torch.no_grad():
-                _, action = torch.tensor(qvals).max(0)
+                _ , action = torch.tensor(qvals).max(1)            
             return int(action), qvals
         return act
                   
     def greedy(self):
         def act(obs):
             obs = torch.tensor(obs).float()
-            qvals = []
-            for i in range(self.action_space):
-                qvals.append(self.model["output"][i](obs))
+            qvals = self.model["outputs"](obs)
             with torch.no_grad():
-                _ , action = torch.tensor(qvals).max(0)            
+                _ , action = torch.tensor(qvals).max(1)            
             return int(action), qvals
         return act
     
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):
         qvals = values[0]
+        target = reward
         with torch.no_grad():
             next_ac, next_qs = policy(next_obs)
-            val = float(next_qs[next_ac])
-        target = reward
-        if done == False:
-            target += self.gamma*(val)
-        loss_func = self.model["loss"][action]
-        optimizer = self.model["optimizer"][action]
-        loss = loss_func(qvals[action][0],torch.tensor(target,requires_grad=False))
+            val = next_qs.detach().numpy().flatten()[next_ac]
+            if done == False:
+                target += self.gamma*(val)
+            target_vals = qvals.clone().detach().numpy()
+            target_vals[0][action] = target
+        loss_func = self.model["loss"]
+        optimizer = self.model["optimizer"]
+        loss = loss_func(qvals,torch.tensor(target_vals,requires_grad=False))
         optimizer.zero_grad()  
         loss.backward()
         optimizer.step()
@@ -125,6 +118,6 @@ class SarsaTorch(BaseAgent):
                     break
                     
             prev_avg = avg
-        return self.stats  
+        return self.stats 
 
 

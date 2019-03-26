@@ -1,5 +1,12 @@
 import numpy as np
 import tensorflow as tf
+import sys
+import sklearn.pipeline
+import sklearn.preprocessing
+from sklearn.kernel_approximation import RBFSampler
+from tqdm import tqdm
+from explorerl.agents import BaseAgent
+from explorerl.utils.models import FeedForwardNNTF
 from collections import deque
 import random
 
@@ -43,7 +50,7 @@ class DQNTF(BaseAgent):
         if self.use_bias:
             input_space += 1
         
-        model = FeedForwardNN(input_space,self.action_space)
+        model = FeedForwardNNTF(input_space,self.action_space)
         def mse_loss(model,predictions,targets):
             return tf.reduce_mean(tf.square(tf.subtract(predictions,targets)))
 #             return tf.reduce_mean(tf.square(tf.subtract(predictions,targets))) + tf.add_n(model.losses)

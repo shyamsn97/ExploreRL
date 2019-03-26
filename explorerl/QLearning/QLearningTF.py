@@ -29,16 +29,12 @@ class QLearningTF(BaseAgent):
             input_space = self.featurizer.transform([np.ones(self.observation_space)]).flatten().shape[0]
         if self.use_bias:
             input_space += 1
+       
+        model = LinearEstimatorTF(input_space=input_space,output_space=self.action_space)
+        self.model["outputs"] = model
         
-        self.model["outputs"] = []
-                
-        for action in range(self.action_space):
-            estim = LinearEstimatorTF(input_space=input_space,output_space=1)
-            self.model["outputs"].append(estim)
-        
-                
         def mse_loss(model,predictions,targets):
-            return tf.reduce_mean(tf.square(tf.subtract(predictions,targets))) + tf.add_n(model.losses)
+            return tf.losses.mean_squared_error(targets,predictions) + tf.add_n(model.losses)
         
         optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
 
@@ -64,32 +60,31 @@ class QLearningTF(BaseAgent):
     
     def epsilon_greedy(self):
         def act(obs):
-            qvals = []
-            for action in range(self.action_space):
-                estimator = self.model["outputs"][action]
-                qval = estimator(obs)
-                qvals.append(qval)
+            estimator = self.model["outputs"]
+            qvals = estimator(obs)
             if np.random.random() < self.epsilon:
                 return np.random.choice(self.action_space) , qvals
-            return np.argmax(qvals) , qvals
+            return np.argmax(qvals[0]) , qvals
         return act
                 
     def greedy(self):
         def act(obs):
             qvals = []
-            for action in range(self.action_space):
-                estimator = self.model["outputs"][action]
-                qval = estimator(obs)
-                qvals.append(qval)
-            return np.argmax(qvals) , qvals
+            estimator = self.model["outputs"]
+            qvals = estimator(obs)
+            return np.argmax(qvals[0]) , qvals
         return act
     
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):
         training_op = self.model["training_op"]
+        qvals = values[0]
         next_action , next_qs = policy(next_obs)
-        target = reward + self.gamma*np.max(next_qs)
-        inp = self.featurize_state(obs)
-        training_op(self.model["outputs"][action],inp,target)
+        target = np.array(qvals)
+        target[0][action] = reward
+        if done == False:
+            target[0][action] = reward + self.gamma*np.max(next_qs)
+        target = tf.stop_gradient(target)
+        training_op(self.model["outputs"],obs,target)
         
     def train(self,env,episodes=200,early_stop=False,stop_criteria=20):
         prev_avg = -float('inf')

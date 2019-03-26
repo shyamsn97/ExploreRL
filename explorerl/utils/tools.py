@@ -43,8 +43,7 @@ def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
                 env.render()
             if gif:
                 frames.append(env.render(mode = 'rgb_array'))
-            values = policy(observation)
-            action = values[0]
+            action, values = policy(observation)
             observation, reward, done, info = env.step(action)
             total_reward += reward
             if done:
