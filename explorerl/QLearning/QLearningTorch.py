@@ -6,7 +6,7 @@ import sklearn.preprocessing
 from sklearn.kernel_approximation import RBFSampler
 from tqdm import tqdm
 from explorerl.agents import BaseAgent
-from explorerl.utils.models import LinearEstimatorTorch
+from explorerl.utils.models import *
     
 class QLearningTorch(BaseAgent):
     def __init__(self,epsilon=1.0, decay= 0.98, gamma=1.0, 

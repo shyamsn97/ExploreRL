@@ -7,7 +7,7 @@ class Env_Wrapper():
     def __init__(self,env):
         self.env = env
 
-    def train(self,agent,episodes=100,max_len=10000,description_configs={"avg_window":25},early_stop=False,stop_criteria=20,plot=True,train_episodal=False):
+    def train(self,agent,episodes=100,max_len=10000,description_configs={"avg_window":100},early_stop=False,stop_criteria=20,plot=True,train_episodal=False):
         bar = tqdm(np.arange(episodes))
         observation_space = self.env.observation_space.shape
         action_space = self.env.action_space.n

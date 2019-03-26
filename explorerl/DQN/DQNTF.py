@@ -6,18 +6,18 @@ import sklearn.preprocessing
 from sklearn.kernel_approximation import RBFSampler
 from tqdm import tqdm
 from explorerl.agents import BaseAgent
-from explorerl.utils.models import FeedForwardNNTF
+from explorerl.utils.models import *
 from collections import deque
 import random
 
-class DQNTF(BaseAgent):
+class DQNTf(BaseAgent):
     def __init__(self,epsilon=1.0, decay= 0.995, gamma=.95, 
                  learning_rate=0.0001, featurizer=None,scaler=None,use_bias = False,has_replay=True,
                  replay_size=2000,replay_batch=32):
-        super(DQNTF, self).__init__(gamma, 
+        super(DQNTf, self).__init__(gamma, 
                  learning_rate, featurizer,scaler,use_bias,has_replay)
         tf.keras.backend.clear_session()
-        self.name = "DQNTF"
+        self.name = "DQNTf"
         self.epsilon = epsilon
         self.decay = decay
         self.experience_replay = deque(maxlen=replay_size)
@@ -35,10 +35,7 @@ class DQNTF(BaseAgent):
                 c += 1
                 if done:
                     break
-            
-    def save_replay(self,obs,action,next_obs,reward,done):
-        self.experience_replay.append([obs,action,next_obs,reward,done])
-        
+
     def initialize_model(self,observation_space,action_space):
         self.epsilon = self.original_configs["epsilon"]
         self.decay = self.original_configs["decay"]
@@ -50,7 +47,7 @@ class DQNTF(BaseAgent):
         if self.use_bias:
             input_space += 1
         
-        model = FeedForwardNNTF(input_space,self.action_space)
+        model = FeedForwardNNTf(input_space,self.action_space)
         def mse_loss(model,predictions,targets):
             return tf.reduce_mean(tf.square(tf.subtract(predictions,targets)))
 #             return tf.reduce_mean(tf.square(tf.subtract(predictions,targets))) + tf.add_n(model.losses)
@@ -118,13 +115,10 @@ class DQNTF(BaseAgent):
         model = self.model["outputs"]
         obs, targets = self.get_replay(training_op,policy)
         _, outs = policy(obs)
-#         training_op(self.model["outputs"],obs,targets)
         
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):
         training_op = self.model["training_op"]
-        self.save_replay(obs,action,next_obs,reward,done)
         obs, targets = self.replay(training_op,policy)
-#         training_op(self.model["outputs"],obs,targets)
     
     def train(self,env,episodes=200,early_stop=False,stop_criteria=20):
         prev_avg = -float('inf')

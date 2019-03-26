@@ -5,13 +5,13 @@ import torch.nn.functional as F
 
 ###################### Tensorflow ######################
 def create_linear_tf(input_dims,output_dims,batch_norm=False,regularizer_weight=0.001):
-	layers = []
-	lin = tf.keras.layers.Dense(input_shape=(input_dims,),units=output_dims, 
-				bias_regularizer=tf.keras.regularizers.l2(regularizer_weight),dtype='float32')
-	layers.append(lin)
-	if batch_norm:
-		layers.append(tf.keras.layers.BatchNormalization())
-	return tf.keras.Sequential(layers)
+    layers = []
+    lin = tf.keras.layers.Dense(input_shape=(input_dims,),units=output_dims,
+                                bias_regularizer=tf.keras.regularizers.l2(regularizer_weight),dtype='float32')
+    layers.append(lin)
+    if batch_norm:
+        layers.append(tf.keras.layers.BatchNormalization())
+        return tf.keras.Sequential(layers)
 
 ###################### Torch ######################
 def create_linear_torch(input_dims,output_dims,batch_norm=False):

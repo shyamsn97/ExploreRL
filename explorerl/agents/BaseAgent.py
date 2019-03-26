@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import deque
 
 class BaseAgent():
-    def __init__(self,gamma, 
-                 learning_rate,featurizer,scaler,use_bias,has_replay=False):
-        self.name = "Base"
+    def __init__(self,gamma,learning_rate,featurizer,scaler,use_bias,has_replay=False):
+        self.name = "BaseAgent"
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.featurizer = featurizer
@@ -13,7 +13,19 @@ class BaseAgent():
         self.use_bias = use_bias
         self.has_replay = has_replay
         self.stats = {"rewards":[],"episodes":[],"num_steps":[]}
- 
+        self.experience_replay = deque()
+        self.epsilon = None
+                
+    def save_replay(self,obs,action,next_obs,reward,done):
+        self.experience_replay.append([obs,action,next_obs,reward,done])
+
+    def discount_reward(self,reward_arr):
+        dr = [0]*(len(reward_arr)+1)
+        for i in range(len(reward_arr)-1,-1,-1):
+            dr[i] = reward_arr[i] + self.gamma*dr[i+1]
+        dr = np.array(dr[:len(reward_arr)])
+        return dr
+    
     def featurize_state(self, state):
         """
         Returns the featurized representation for a state.
@@ -49,7 +61,10 @@ class BaseAgent():
     
     def update_hyper_params(self,episode):
         pass
-        
+    
+    def initialize_replay(self,env):
+        pass
+    
     def initialize_model(self):
         pass
     

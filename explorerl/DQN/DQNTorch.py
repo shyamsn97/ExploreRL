@@ -6,7 +6,7 @@ import sklearn.preprocessing
 from sklearn.kernel_approximation import RBFSampler
 from tqdm import tqdm
 from explorerl.agents import BaseAgent
-from explorerl.utils.models import FeedForwardNNTorch
+from explorerl.utils.models import *
 from collections import deque
 
 class DQNTorch(BaseAgent):
@@ -33,10 +33,7 @@ class DQNTorch(BaseAgent):
                 c += 1
                 if done:
                     break
-            
-    def save_replay(self,obs,action,next_obs,reward,done):
-        self.experience_replay.append([obs,action,next_obs,reward,done])
-
+                    
     def replay(self,policy):
         minibatch = random.sample(self.experience_replay, self.replay_batch)
         obs_arr = []
@@ -53,7 +50,8 @@ class DQNTorch(BaseAgent):
                     target += self.gamma*(val)
                 target_vals = qvals.clone().detach().numpy()
                 target_vals[0][action] = target
-            loss = loss_func(qvals,torch.tensor(target_vals,requires_grad=False))
+                target_vals = torch.tensor(target_vals,requires_grad=False)
+            loss = loss_func(qvals,target_vals)
             optimizer.zero_grad()  
             loss.backward()
             optimizer.step()
@@ -114,7 +112,6 @@ class DQNTorch(BaseAgent):
         _, outs = policy(obs)
         
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):
-        self.save_replay(obs,action,next_obs,reward,done)
         obs, targets = self.replay(policy)
         
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):

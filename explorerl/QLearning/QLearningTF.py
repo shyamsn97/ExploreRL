@@ -6,15 +6,15 @@ import sklearn.preprocessing
 from sklearn.kernel_approximation import RBFSampler
 from tqdm import tqdm
 from explorerl.agents import BaseAgent
-from explorerl.utils.models import LinearEstimatorTF
+from explorerl.utils.models import LinearEstimatorTf
 
-class QLearningTF(BaseAgent):
+class QLearningTf(BaseAgent):
     def __init__(self,epsilon=1.0, decay= 0.98, gamma=1.0, 
                  learning_rate=0.01, featurizer=None,scaler=None,use_bias = False):
-        super(QLearningTF, self).__init__(gamma, 
+        super(QLearningTf, self).__init__(gamma, 
                  learning_rate, featurizer,scaler,use_bias)
         tf.keras.backend.clear_session()
-        self.name = "QLearningTF"
+        self.name = "QLearningTf"
         self.epsilon = epsilon
         self.decay = decay
         self.original_configs = {"epsilon":self.epsilon,"decay":self.decay}
@@ -30,7 +30,7 @@ class QLearningTF(BaseAgent):
         if self.use_bias:
             input_space += 1
        
-        model = LinearEstimatorTF(input_space=input_space,output_space=self.action_space)
+        model = LinearEstimatorTf(input_space=input_space,output_space=self.action_space)
         self.model["outputs"] = model
         
         def mse_loss(model,predictions,targets):

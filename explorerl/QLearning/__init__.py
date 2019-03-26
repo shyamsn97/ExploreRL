@@ -1,2 +1,2 @@
-from .QLearningTF import *
+from .QLearningTf import *
 from .QLearningTorch import *

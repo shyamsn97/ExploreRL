@@ -1,2 +1,2 @@
-from .SarsaTF import *
+from .SarsaTf import *
 from .SarsaTorch import *
