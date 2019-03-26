@@ -76,3 +76,4 @@ class REINFORCETorch(BaseAgent):
             loss.backward()  
             optimizer.step()
         self.experience_replay = deque([])
+        
