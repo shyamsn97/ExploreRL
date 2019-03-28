@@ -1,33 +1,17 @@
 import numpy as np
 import tensorflow as tf
-import sys
-import sklearn.pipeline
-import sklearn.preprocessing
-from sklearn.kernel_approximation import RBFSampler
-from tqdm import tqdm
-from explorerl.agents import BaseAgent
-from explorerl.utils.models import *
+from explorerl.agents import BaseTfAgent
 from collections import deque
 import random
 
-class REINFORCETf(BaseAgent):
-    def __init__(self,gamma=1.0,learning_rate=0.001, featurizer=None,scaler=None,use_bias = False):
-        super(REINFORCETf, self).__init__(gamma,learning_rate,featurizer,scaler,use_bias,has_replay=True)
-        tf.keras.backend.clear_session()
+class REINFORCETf(BaseTfAgent):
+    def __init__(self,estimator=None,gamma=1.0,learning_rate=0.001, featurizer=None,scaler=None,replay_size=500):
+        super(REINFORCETf, self).__init__(estimator,gamma,learning_rate,featurizer,scaler,configs={"softmax"},replay_size=replay_size)
         self.name = "REINFORCETf"
     
     def initialize_model(self,observation_space,action_space):
-        self.observation_space = observation_space[0]
-        self.action_space = action_space
-        input_space = self.observation_space  
-        if self.featurizer:
-            input_space = self.featurizer.transform([np.ones(self.observation_space)]).flatten().shape[0]
-        if self.use_bias:
-            input_space += 1
-       
-        model = LinearEstimatorTf(input_space=input_space,output_space=self.action_space,softmax=True)
-        self.model["outputs"] = model
-        
+        super(REINFORCETf, self).initialize_model(observation_space,action_space)          
+
         def log_loss(model,predictions,targets):
             return -1*(tf.reduce_sum(tf.multiply(tf.math.log(predictions),targets))) + tf.add_n(model.losses)
         
@@ -52,14 +36,15 @@ class REINFORCETf(BaseAgent):
     
     def stochastic(self):
         def act(obs):
-            estimator = self.model["outputs"]
+            estimator = self.model["estimator"]
             probs = estimator(obs)
-            return np.random.choice(self.action_space,p=np.array(probs[0])) , probs
+            if "continuous" not in self.configs:
+                return np.random.choice(self.action_space,p=np.array(probs[0])) , probs
         return act
     
     def greedy(self):
         def act(obs):
-            estimator = self.model["outputs"]
+            estimator = self.model["estimator"]
             probs = estimator(obs)
             return np.argmax(probs[0]) , probs
         return act
@@ -76,6 +61,8 @@ class REINFORCETf(BaseAgent):
             obs, action, next_obs, reward, done = self.experience_replay[i]
             target = np.zeros((1,self.action_space))
             target[0][action] = dr[i]
-            training_op(self.model["outputs"],obs,target)
-        self.experience_replay = deque([])
+            training_op(self.model["estimator"],obs,target)
+        self.experience_replay = deque(maxlen=self.replay_size)
+
+
         

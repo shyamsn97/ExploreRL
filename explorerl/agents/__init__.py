@@ -1,2 +1,3 @@
 from .Agent import Agent
-from .BaseAgent import BaseAgent
+from .BaseTfAgent import BaseTfAgent
+from .BaseTorchAgent import BaseTorchAgent

@@ -28,4 +28,18 @@ def create_scaler_featurizer(env,make_scaler=True):
     featurizer.fit(observation_examples)
 
     return scaler,featurizer
-    
+
+def initialize_replay(env,agent):
+    if agent.replay_size > 0:
+        c = 0
+        while c < agent.replay_size:
+            obs = env.reset()
+            while True:
+                action = env.action_space.sample()
+                next_obs, reward, done, info = env.step(action)
+                agent.save_replay(agent.featurize_state(obs),action,agent.featurize_state(next_obs),reward,done)
+                c += 1
+                if done:
+                    break
+        env.close()     
+        

@@ -1,34 +1,23 @@
 import numpy as np
 import torch
-import sys
-import sklearn.pipeline
-import sklearn.preprocessing
-from sklearn.kernel_approximation import RBFSampler
-from tqdm import tqdm
-from explorerl.agents import BaseAgent
-from explorerl.utils.models import *
+from explorerl.agents import BaseTorchAgent
 from collections import deque
 import random
 
-class REINFORCETorch(BaseAgent):
-    def __init__(self,gamma=1.0,learning_rate=0.001, featurizer=None,scaler=None,use_bias = False):
-        super(REINFORCETorch, self).__init__(gamma,learning_rate,featurizer,scaler,use_bias,has_replay=True)
+class REINFORCETorch(BaseTorchAgent):
+    def __init__(self,estimator=None,gamma=1.0,learning_rate=0.001, featurizer=None,scaler=None,replay_size=500):
+        super(REINFORCETorch, self).__init__(estimator,gamma,learning_rate,featurizer,scaler,configs={"softmax"},replay_size=replay_size)
         self.name = "REINFORCETorch"
     
     def initialize_model(self,observation_space,action_space):
-        self.observation_space = observation_space[0]
-        self.action_space = action_space
-        input_space = self.observation_space  
-        if self.featurizer:
-            input_space = self.featurizer.transform([np.ones(self.observation_space)]).flatten().shape[0]
-        if self.use_bias:
-            input_space += 1
-        model = LinearEstimatorTorch(input_space,action_space,softmax=True)
+        super(REINFORCETorch, self).initialize_model(observation_space,action_space)          
+
         def loss(predictions,targets):
             return -1*torch.sum(torch.mul(torch.log(predictions),targets))
-        self.model["outputs"] = model
+
         self.model["loss"] = loss
-        self.model["optimizer"] = torch.optim.Adam(params=self.model["outputs"].parameters(),lr=self.learning_rate,weight_decay=0.0001)
+        self.model["optimizer"] = torch.optim.Adam(params=self.model["estimator"].parameters(),lr=self.learning_rate,weight_decay=0.0001)
+
         print("Model Created!")
 
     def train_policy(self):
@@ -40,17 +29,19 @@ class REINFORCETorch(BaseAgent):
     def stochastic(self):
         def act(obs):
             obs = torch.tensor(obs).float()
-            estimator = self.model["outputs"]
+            estimator = self.model["estimator"]
             probs = estimator(obs)
-            return np.random.choice(self.action_space,p=probs.clone().detach().numpy()[0]) , probs
+            if "continuous" not in self.configs:
+                return np.random.choice(self.action_space,p=probs.clone().detach().numpy()[0]) , probs
         return act
                    
     def greedy(self):
         def act(obs):
             obs = torch.tensor(obs).float()
-            probs = self.model["outputs"](obs)
+            probs = self.model["estimator"](obs)
             with torch.no_grad():
-                _ , action = torch.tensor(probs).max(1)            
+                if "continuous" not in self.configs:
+                    _ , action = torch.tensor(probs).max(1)            
             return int(action), probs
         return act
     
@@ -66,7 +57,7 @@ class REINFORCETorch(BaseAgent):
         for i in range(len(reward_arr)):
             obs, action, next_obs, reward, done = self.experience_replay[i]
             obs = torch.tensor(obs).float()
-            probs = self.model["outputs"](obs)
+            probs = self.model["estimator"](obs)
             with torch.no_grad():
                 target = np.zeros((1,self.action_space))
                 target[0][action] = dr[i]
@@ -75,5 +66,6 @@ class REINFORCETorch(BaseAgent):
             optimizer.zero_grad()
             loss.backward()  
             optimizer.step()
-        self.experience_replay = deque([])
+        self.experience_replay = deque(maxlen=self.replay_size)
+
         

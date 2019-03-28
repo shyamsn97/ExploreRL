@@ -1,20 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
+from explorerl.utils.models import *
 
-class BaseAgent():
-    def __init__(self,gamma,learning_rate,featurizer,scaler,use_bias,has_replay=False):
-        self.name = "BaseAgent"
+class BaseTfAgent():
+    def __init__(self,estimator,gamma,learning_rate,featurizer,scaler,configs={},replay_size=0):
+        tf.keras.backend.clear_session()
+        self.name = "BaseTfAgent"
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.featurizer = featurizer
         self.scaler = scaler
         self.model = {}
-        self.use_bias = use_bias
-        self.has_replay = has_replay
         self.stats = {"rewards":[],"episodes":[],"num_steps":[]}
-        self.experience_replay = deque()
+        self.replay_size = replay_size
+        self.experience_replay = deque(maxlen=replay_size)
         self.epsilon = None
+        self.decay = None
+        self.estimator = estimator
+        self.configs = configs
                 
     def save_replay(self,obs,action,next_obs,reward,done):
         self.experience_replay.append([obs,action,next_obs,reward,done])
@@ -36,12 +40,10 @@ class BaseAgent():
                 featurized = self.featurizer.transform(state)
             else:
                 featurized = self.featurizer.transform([state])
-            if self.use_bias:
-                return np.expand_dims(np.concatenate(([1],featurized[0])),0)
             return featurized
-        if self.use_bias:
-            return np.expand_dims(np.concatenate(([1],state)),0)
-        return np.expand_dims(state,0) 
+        if len(state.shape) == 1:
+            return np.expand_dims(state,0) 
+        return state
 
     def reset_stats(self):
         self.stats = {"rewards":[],"episodes":[],"num_steps":[]}
@@ -61,13 +63,19 @@ class BaseAgent():
     
     def update_hyper_params(self,episode):
         pass
-    
-    def initialize_replay(self,env):
-        pass
-    
-    def initialize_model(self):
-        pass
-    
+
+    def initialize_model(self,observation_space,action_space):
+        self.observation_space = observation_space
+        self.action_space = action_space
+        if self.featurizer:
+            self.observation_space = [*self.featurizer.transform([np.ones(self.observation_space)]).flatten().shape]
+        if self.estimator == None:
+            self.model["estimator"] = LinearEstimatorTf(input_space=self.observation_space,output_space=self.action_space,configs=self.configs)
+        elif type(self.estimator) == type:
+            self.model["estimator"] = self.estimator(input_space=self.observation_space,output_space=self.action_space,configs=self.configs)
+        else:
+            self.model["estimator"] = self.estimator
+
     def train_policy(self):
         pass
 
@@ -79,5 +87,22 @@ class BaseAgent():
 
     def train_iter(self,policy,action,values,obs,next_obs,reward,done):
         pass
+
+    def play(env,episodes,steps=10000,display=True):
+        policy = test_policy()
+        for ep in range(episodes):
+            observation = env.reset()
+            total_reward = 0
+            for t in range(steps):
+                observation = agent.featurize_state(observation)
+                if display:
+                    env.render()
+                action, values = policy(observation)
+                observation, reward, done, info = env.step(action)
+                total_reward += reward
+                if done:
+                    break
+            print("Total reward for episode {}: {}".format(ep,total_reward))
+        env.close()
 
 

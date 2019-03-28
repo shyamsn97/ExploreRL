@@ -32,9 +32,9 @@ def display_frames_as_gif(frames):
     display(display_animation(anim, default_mode='loop'))
 
 def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
-    frames = []
-    policy = agent.greedy()
+    policy = agent.test_policy()
     for ep in range(episodes):
+        frames = []
         observation = env.reset()
         total_reward = 0
         for t in range(steps):
@@ -49,7 +49,8 @@ def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
             if done:
                 break
         print("Total reward for episode {}: {}".format(ep,total_reward))
-        env.close()
-    if gif:
-        display_frames_as_gif(frames)
+        if gif:
+            display_frames_as_gif(frames)
+    env.close()
+
     

@@ -3,18 +3,21 @@ import numpy as np
 from tqdm import tqdm
 from explorerl.utils import *
 
-class Env_Wrapper():
+class EnvRunner():
     def __init__(self,env):
         self.env = env
 
     def train(self,agent,episodes=100,max_len=10000,description_configs={"avg_window":100},early_stop=False,stop_criteria=20,plot=True,train_episodal=False):
         bar = tqdm(np.arange(episodes))
-        observation_space = self.env.observation_space.shape
-        action_space = self.env.action_space.n
+        observation_space = [*self.env.observation_space.shape]
+        if self.env.action_space.dtype == np.dtype('float32') or self.env.action_space.dtype == np.dtype('float64'): 
+            action_space = self.env.action_space.shape[0]
+            agent.configs.add("continuous")
+        else:
+            action_space = self.env.action_space.n
         agent.initialize_model(observation_space,action_space)
         agent.reset_stats()
-        if agent.has_replay:
-            agent.initialize_replay(self.env)
+        initialize_replay(self.env,agent)
         policy = agent.train_policy()
         criteria = 0 #stopping condition
         for episode in bar:
@@ -27,8 +30,7 @@ class Env_Wrapper():
                 action = values[0]
                 next_obs, reward, done, info = self.env.step(action)
                 next_obs = agent.featurize_state(next_obs)
-                if agent.has_replay:
-                    agent.save_replay(observation,action,next_obs,reward,done)
+                agent.save_replay(observation,action,next_obs,reward,done)
                 if train_episodal == False:
                     agent.train_iter(policy,action,values[1:],observation,next_obs,reward,done)
                 rewards += reward
@@ -46,7 +48,6 @@ class Env_Wrapper():
                     criteria += 1
                 if criteria >= stop_criteria:
                     break
-
             prev_avg = avg
         if plot:
             plot_metrics(agent.stats)
