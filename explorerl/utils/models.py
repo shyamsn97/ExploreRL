@@ -8,7 +8,6 @@ class DualPolicyValueHead(tf.keras.Model):
     def __init__(self,input_space,output_space,configs={"softmax"}):
         super(DualPolicyValueHead, self).__init__()
         
-
 class LinearEstimatorTf(tf.keras.Model):
     def __init__(self,input_space,output_space,configs={"softmax"}):
         super(LinearEstimatorTf, self).__init__()

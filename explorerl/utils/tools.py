@@ -21,14 +21,22 @@ def display_frames_as_gif(frames):
     """
     Displays a list of frames as a gif, with controls
     """
+    fig = plt.figure("Animation",figsize=(7,5))
+    ax = fig.add_subplot(111)
+
     #plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi = 72)
-    patch = plt.imshow(frames[0])
-    plt.axis('off')
+    ims = []
+    npad = ((4, 4), (4, 4),(0,0))
+    for i in range(len(frames)):
+        img = np.pad(frames[i][0], pad_width=npad, mode='constant', constant_values=255.) #pad white 
+        frame =  ax.imshow(img)   
+        ax.axis('off')
+        t = ax.annotate(frames[i][1],(1,1)) # add text
+        t.set_fontsize(12)
 
-    def animate(i):
-        patch.set_data(frames[i])
+        ims.append([frame,t]) # add both the image and the text to the list of artists 
 
-    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
+    anim = animation.ArtistAnimation(fig, ims, interval=50, blit=True)
     display(display_animation(anim, default_mode='loop'))
 
 def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
@@ -42,7 +50,7 @@ def play_render(env,agent,episodes=1,steps=1000,display=False,gif=True):
             if display:
                 env.render()
             if gif:
-                frames.append(env.render(mode = 'rgb_array'))
+                frames.append((env.render(mode = 'rgb_array'),"Cumulative reward for episode {} at time step {}: {}".format(ep,t,total_reward)))
             action, values = policy(observation)
             observation, reward, done, info = env.step(action)
             total_reward += reward

@@ -4,22 +4,26 @@ import torch
 import torch.nn.functional as F
 
 ###################### Tensorflow ######################
-def create_linear_tf(input_dims,output_dims,batch_norm=False,regularizer_weight=0.001):
+def create_linear_tf(input_dims,output_dims,relu=True,batch_norm=False,regularizer_weight=0.0001):
     layers = []
-    lin = tf.keras.layers.Dense(input_shape=(input_dims,),units=output_dims,
+    lin = tf.keras.layers.Dense(input_shape=input_dims,units=output_dims,
                                 bias_regularizer=tf.keras.regularizers.l2(regularizer_weight),dtype='float32')
     layers.append(lin)
     if batch_norm:
         layers.append(tf.keras.layers.BatchNormalization())
-        return tf.keras.Sequential(layers)
+    if relu:
+        layers.append(tf.keras.layers.ReLU())
+    return tf.keras.Sequential(layers)
 
 ###################### Torch ######################
-def create_linear_torch(input_dims,output_dims,batch_norm=False):
+def create_linear_torch(input_dims,output_dims,relu=True,batch_norm=False):
     layers = []
     lin = torch.nn.Linear(input_dims,output_dims)
     layers.append(lin)
     if batch_norm:
         layers.append(torch.nn.BatchNorm1d(output_dims))
+    if relu:
+        layers.append(torch.nn.ReLU())
     return torch.nn.Sequential(*layers)
 
 def conv1d(in_channels, out_channels, kernel_size, stride=1, padding=1, 
