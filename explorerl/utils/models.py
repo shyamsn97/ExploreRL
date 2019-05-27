@@ -44,18 +44,5 @@ class LinearEstimatorTorch(torch.nn.Module):
         x = self.linear(x)
         return x
 
-class FeedForwardNNTorch(torch.nn.Module):
-    def __init__(self,input_space,output_space,configs={"softmax"}):
-        super(FeedForwardNNTorch, self).__init__()
-        self.linear1 = torch.nn.Linear(*input_space,24)
-        self.linear2 = torch.nn.Linear(24,24)
-        self.linear3 = torch.nn.Linear(24,output_space)
-        if "softmax" in configs:
-            self.linear3 = torch.nn.Sequential(*[self.linear3,torch.nn.Softmax(dim=-1)])
-        
-    def forward(self,x):
-        x = F.relu(self.linear1(x))
-        x = F.relu(self.linear2(x))
-        x = self.linear3(x)
-        return x
+
 
