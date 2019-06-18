@@ -15,3 +15,14 @@ Reinforcement Learning Algorithms implemented in Tensorflow 2.0 and PyTorch. Eac
 
 ### Policy Gradient
 - [REINFORCE](https://papers.nips.cc/paper/1713-policy-gradient-methods-for-reinforcement-learning-with-function-approximation.pdf) [(code)](explorerl/REINFORCE/) [(example)](explorerl/REINFORCE/notebooks/REINFORCE.ipynb)
+
+### Rendering on headless server (thanks to https://github.com/EN10/CartPole)
+```
+#Install
+sudo apt install xvfb
+sudo apt install python-opengl
+sudo apt install ffmpeg
+
+# Render to jupyter
+xvfb-run -s "-screen 0 600x400x24" jupyter-notebook
+```
